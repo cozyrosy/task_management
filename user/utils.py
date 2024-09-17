@@ -1,6 +1,10 @@
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework_jwt.serializers import VerifyJSONWebTokenSerializer
 from pure_pagination import Paginator, EmptyPage, PageNotAnInteger
+from rest_framework_simplejwt.tokens import AccessToken
+from rest_framework.exceptions import AuthenticationFailed
+from .models import UserProfile
 
 
 def generic_response(status_code=status.HTTP_200_OK, message=None, data=None, common_data={}):
@@ -36,6 +40,35 @@ def validate_field_not_request_body(request_body_fields={}):
 #         print('Error while verifying access token %s', ex)
 #         return None
 
+def validate_logged_in_user(request):
+    # Fetch the Authorization header
+    auth_header = request.headers.get('Authorization')
+
+    if not auth_header:
+        return generic_response(status.HTTP_400_BAD_REQUEST, "Authorization header missing!")
+
+    # Check if the header contains the Bearer token
+    if not auth_header.startswith('Bearer '):
+        return generic_response(status.HTTP_400_BAD_REQUEST, "Invalid token header! Expected 'Bearer <token>'")
+
+    # Extract the token (after 'Bearer ')
+    token = auth_header.split(' ')[1]
+
+    try:
+        # Validate the access token
+        access_token = AccessToken(token)
+        user_id = access_token.get('user_id')
+
+        user = UserProfile.objects.filter(id=user_id).first()
+        if not user:
+            return generic_response(status.HTTP_400_BAD_REQUEST, "Invalid user!")
+
+        return user
+
+    except Exception as ex:
+        # Handle any other exceptions
+        print(f'Unexpected error: {str(ex)}')
+        return generic_response(status.HTTP_400_BAD_REQUEST, f"Unexpected error: {str(ex)}")
 
 def sanitized_bool_query_params(query_param) ->bool:
     """
