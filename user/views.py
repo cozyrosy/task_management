@@ -9,7 +9,24 @@ from rest_framework.permissions import IsAuthenticated
 from .utils import generic_response, validate_field_not_request_body
 from .models import UserProfile
 from .serializers import RegisterSerializer, LoginSerializer
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 # Create your views here.   
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+
+        # Add custom claims
+        # token['username'] = user.username
+
+        return token
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class =  MyTokenObtainPairSerializer
 
 
 class RegisterAPI(APIView):
@@ -64,28 +81,34 @@ class LoginAPI(APIView):
     def post(self, request):
         try:
             data = request.data
-            serializer = LoginSerializer(data=data)
-            if serializer.is_valid():
-                email = data.get('email')
-                password = data.get('password')
-                import pdb; pdb.set_trace()
+            email = data.get('email')
+            password = data.get('password')
 
-                user_profile = UserProfile.objects.filter(email=email).first()
+            user_profile = UserProfile.objects.filter(email=email).first()
 
-                user = authenticate(email=email, password=password)
-                if user is None:
-                    return generic_response(status.HTTP_400_BAD_REQUEST,
-                                    'Invalid user!')
+            user = authenticate(email=email, password=password)
+            if user is None:
+                return generic_response(status.HTTP_400_BAD_REQUEST, message='Invalid user!')
 
-                # login(request, user)
-                refresh = RefreshToken.for_user(user)
+            # Use the custom TokenObtainPairSerializer to get the token
+            token_serializer = MyTokenObtainPairSerializer(data={
+                'email': email,
+                'password': password
+            })
+            if token_serializer.is_valid():
+                
+                token_data = token_serializer.validated_data
+                access_token = token_data['access']
+                refresh_token = token_data['refresh']
 
-                return Response({
-                    'refresh': str(refresh),
-                    'access': str(refresh.access_token),
+                return generic_response(status.HTTP_200_OK, data={
+                    'user_id': user.id,
+                    'access_token': access_token,
+                    'refresh_token': refresh_token
                 })
             else:
-                return generic_response(status.HTTP_400_BAD_REQUEST, f'Error:{serializer.errors}')
+                return generic_response(status.HTTP_400_BAD_REQUEST,
+                                        f'Error: {token_serializer.errors}')
         except Exception as ex:
             print(ex)
             return generic_response(status.HTTP_400_BAD_REQUEST,
