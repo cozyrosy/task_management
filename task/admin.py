@@ -4,9 +4,9 @@ from .models import Tasks
 
 
 class TasksAdmin(admin.ModelAdmin):
-    list_display = ['id', 'title', 'description', 'is_completed']
+    list_display = ['id', 'title', 'description']
     search_fields = ['title']
-    list_filter = ['is_completed']
+    # list_filter = ['is_completed']
 
 
 admin.site.register(Tasks, TasksAdmin)
