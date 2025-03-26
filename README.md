@@ -1,4 +1,4 @@
-# task-app
+# task-management
 Task App - REST API with JWT Authentication
 This Django app provides a RESTful API for managing tasks. Users can perform CRUD (Create, Read, Update, Delete) operations on tasks, and all endpoints are secured using JWT (JSON Web Token) authentication.
 
@@ -204,13 +204,27 @@ Params:
 
 {
 
-      "is_completed": 0 (true or false),
+      "user_id ": 12,
+      
+      "status" : "pending",
       
       "next_page: 2,
 
       "per_page": 30
 
 }
+
+Response:
+[
+  {
+  
+    "id": 1,
+    "title": "Sample Task",
+    "description": "Task details",
+    "status": "pending",
+    "assigned_users": [1, 2]
+  }
+]
 
 For the list API handled the pagination in order to go to next page, need pass next_page=2.
 If you want particular number of data at first calling need to pass the parameter per_page=30
@@ -241,7 +255,18 @@ Payload:
       
       "description": "Task details",
       
-      "is_completed": false
+      "status": "pending",
+      
+      "assigned_users": [1, 2]
+}
+
+Response:
+
+{
+
+    "message": "Task created successfully!",
+      
+    "task_id": 2
 }
 
 -------------------------------------------------------------------------------------------------------------------------------
@@ -260,6 +285,17 @@ Headers:
     
     "Authorization": "Bearer <jwt_access_token>"
 
+}
+
+Response:
+
+{
+
+      "id": 1,
+      "title": "Sample Task",
+      "description": "Task details",
+      "status": "pending",
+      "assigned_users": [1, 2]
 }
 
 -------------------------------------------------------------------------------------------------------------------------------
@@ -283,13 +319,17 @@ Headers:
 Payload:
 
 {
-    
-    "title": "Updated Task Title",
-    
-    "description": "Updated details",
-    
-    "is_completed": true
 
+      "title": "Updated Task",
+      "status": "completed"
+}
+
+Response:
+
+{
+
+       "message": "Task updated successfully!",
+       "data": { "id": 1, "title": "Updated Task", "status": "completed" }
 }
 
 -------------------------------------------------------------------------------------------------------------------------------
@@ -310,7 +350,40 @@ Headers:
 
 }
 
+Response:
+
+{
+ 
+      "message": "Task deleted successfully."
+}
+
 -------------------------------------------------------------------------------------------------------------------------------
+
+**Error Handling**
+Errors are returned in the following format:
+{
+
+      "message": "Error description"
+}
+
+Common error codes:
+
+1. 400 Bad Request – Invalid input data
+
+2. 401 Unauthorized – Authentication required
+
+3. 403 Forbidden – Access denied
+
+4. 404 Not Found – Resource not found
+
+**Notes**
+
+Ensure to replace your_access_token with a valid JWT token for authenticated endpoints.
+
+Tasks can be assigned to multiple users using a list of user IDs.
+
+The status field in tasks can have predefined values (e.g., pending, in_progress, completed).
+
 
 **JWT Authentication**
 
