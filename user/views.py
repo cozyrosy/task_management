@@ -60,13 +60,17 @@ class RegisterAPI(APIView):
             serializer = RegisterSerializer(data=data)
 
             if serializer.is_valid():
-                serializer.save()
+                user = serializer.save()
 
-                user_profile = UserProfile.objects.filter(email=email).first()
-                user = authenticate(email=email, password=password)
+                # user_profile = UserProfile.objects.filter(email=email).first()
+                # user = authenticate(email=email, password=password)
+
+                 # Generate JWT Token for the new user
+                refresh = MyTokenObtainPairSerializer.get_token(user)
+                access_token = str(refresh.access_token)
 
                 return generic_response(status.HTTP_201_CREATED, 'Registered successfully.', {
-                    'user_id': user.id, 'access_token': jwt_token
+                    'user_id': user.id, 'access_token': access_token
                     })
             else:
                 return generic_response(status.HTTP_400_BAD_REQUEST, f'Error:{serializer.errors}')
@@ -113,4 +117,3 @@ class LoginAPI(APIView):
             print(ex)
             return generic_response(status.HTTP_400_BAD_REQUEST,
                                     'Error while logging you in!')
-
